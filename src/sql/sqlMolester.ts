@@ -4,7 +4,9 @@ import { type BlogFormat } from '../blog/blogFormat';
 import { type SecurityFormat } from '../security/securityType';
 
 export async function getDataFromDb(env: Env, kind: 'blog' | 'totp') {
-	const result = await env.personal_api.prepare(`SELECT * FROM ${kind == 'blog' ? 'Blog' : 'Security'}`).all();
+	const result = await env.personal_api
+		.prepare(`SELECT * FROM ${kind == 'blog' ? 'Blog' : 'Security'} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''}`)
+		.all();
 	return result ?? false;
 }
 
@@ -60,7 +62,7 @@ export async function deleteFromDb(env: Env, postId: number, kind: 'blog'): Prom
 
 export async function insertIntoDb(env: Env, data: BlogFormat | SecurityFormat, kind: 'blog' | 'security'): Promise<boolean> {
 	const blogSchema: string = 'INSERT INTO Blog (Timestamp,Tags,Creator,Title,Body,Location) VALUES (?, ?, ?, ?, ?, ?)';
-	const securitySchema: string = `INSERT INTO Security (Name, UsedFor, Type, Value) VALUES (?, ?)`;
+	const securitySchema: string = `INSERT INTO Security (Name, UsedFor, Type, Value) VALUES (?, ?, ?, ?)`;
 
 	let result;
 	if (kind === 'blog') {
