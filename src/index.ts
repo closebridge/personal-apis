@@ -3,10 +3,12 @@ export interface Env {
 	// replace "DB" with the variable name you defined.
 	personal_api: D1Database;
 	NO_SPAMMIE: RateLimit;
+	MASTER_CRED: string;
 }
 
 import getBlogPosts from './blog/blogConverter';
 import blogEditor from './blog/blogEditor';
+import timeOTP from './security/timeOTP';
 import { type BlogFormat, type BlogUpdate } from './blog/blogFormat';
 
 export default {
@@ -53,6 +55,13 @@ export default {
 						'so you want to make privileged post calls, but you cant even figured what u want? o yea right let me `await openai.chat.completions.create({model: "gpt-5.4-pro", message: "can u check wtf is this su dude wants?"})`, LMFAO MATIKANETANNHAUSER ON THE KEYBOARD CHURNING SLOPS RN',
 						{ status: 400 },
 					);
+
+				// authetication verifying ts
+				const isVerified = await timeOTP('verify', env, payload.authenticate);
+
+				if (!isVerified[0]) return new Response('close, but still who the fuck are you?', { status: 401 });
+
+				// const generatedOTP = await timeOTP('generate', env); << THIS WORKS.
 
 				// after like bajillion checks later, we can actually like molest the database frfr
 				// with another bajillion more checks, 💀
