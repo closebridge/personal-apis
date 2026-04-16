@@ -1,8 +1,10 @@
 import { Env } from '..';
+import blogEditor from '../blog/blogEditor';
 import { type BlogFormat } from '../blog/blogFormat';
+import { type SecurityFormat } from '../security/securityType';
 
-export async function getDataFromDb(env: Env, kind: 'blog') {
-	const result = await env.personal_api.prepare(`SELECT * FROM Blog`).all();
+export async function getDataFromDb(env: Env, kind: 'blog' | 'totp') {
+	const result = await env.personal_api.prepare(`SELECT * FROM ${kind == 'blog' ? 'Blog' : 'Security'}`).all();
 	return result ?? false;
 }
 
@@ -20,29 +22,35 @@ function getTimestamp(data: BlogFormat): number {
 	return data.Timestamp === undefined ? Date.now() : data.Timestamp;
 }
 
-export async function updateDb(env: Env, postId: number, data: BlogFormat, kind: 'blog'): Promise<boolean> {
-	const result = await env.personal_api
-		.prepare(
-			`UPDATE Blog SET
-				Timestamp = ?,
-				Tags = ?,
-				Creator = ?,
-				Title = ?,
-				Body = ?,
-				Location = ?
-			WHERE PostId = ?`,
-		)
-		.bind(
-			prepareValue(getTimestamp(data)),
-			prepareValue(data.Tags),
-			prepareValue(data.Creator),
-			prepareValue(data.Title),
-			prepareValue(data.Body),
-			prepareValue(data.Location),
-			postId,
-		)
-		.run();
-	return result.success;
+export async function updateDb(env: Env, itemId: number, data: BlogFormat | SecurityFormat, kind: 'blog' | 'security'): Promise<boolean> {
+	const blogSchema = `UPDATE Blog SET Timestamp = ?, Tags = ?, Creator = ?, Title = ?, Body = ?, Location = ? WHERE PostId = ?`;
+	const securitySchema = `UPDATE Security SET Name = ?, UsedFor = ?, Type = ?, Value = ? WHERE Id = ?`;
+
+	if (kind == 'blog') {
+		const inputQueue = data as BlogFormat;
+
+		const result = await env.personal_api
+			.prepare(blogSchema)
+			.bind(
+				prepareValue(getTimestamp(inputQueue)),
+				prepareValue(inputQueue.Tags),
+				prepareValue(inputQueue.Creator),
+				prepareValue(inputQueue.Title),
+				prepareValue(inputQueue.Body),
+				prepareValue(inputQueue.Location),
+				itemId,
+			)
+			.run();
+		return result.success;
+	} else if (kind == 'security') {
+		const inputQueue = data as SecurityFormat;
+		const result = await env.personal_api
+			.prepare(securitySchema)
+			.bind(prepareValue(inputQueue.Name), prepareValue(inputQueue.UsedFor), prepareValue(inputQueue.Type), prepareValue(inputQueue.Value))
+			.run();
+		return result.success;
+	}
+	return false;
 }
 
 export async function deleteFromDb(env: Env, postId: number, kind: 'blog'): Promise<boolean> {
@@ -50,26 +58,32 @@ export async function deleteFromDb(env: Env, postId: number, kind: 'blog'): Prom
 	return result.success;
 }
 
-export async function insertIntoDb(env: Env, data: BlogFormat, kind: 'blog'): Promise<boolean> {
-	const result = await env.personal_api
-		.prepare(
-			`INSERT INTO Blog (
-				Timestamp,
-				Tags,
-				Creator,
-				Title,
-				Body,
-				Location
-			) VALUES (?, ?, ?, ?, ?, ?)`,
-		)
-		.bind(
-			prepareValue(getTimestamp(data)),
-			prepareValue(data.Tags),
-			prepareValue(data.Creator),
-			prepareValue(data.Title),
-			prepareValue(data.Body),
-			prepareValue(data.Location),
-		)
-		.run();
-	return result.success;
+export async function insertIntoDb(env: Env, data: BlogFormat | SecurityFormat, kind: 'blog' | 'security'): Promise<boolean> {
+	const blogSchema: string = 'INSERT INTO Blog (Timestamp,Tags,Creator,Title,Body,Location) VALUES (?, ?, ?, ?, ?, ?)';
+	const securitySchema: string = `INSERT INTO Security (Name, UsedFor, Type, Value) VALUES (?, ?)`;
+
+	let result;
+	if (kind === 'blog') {
+		const inputQueue = data as BlogFormat;
+		result = await env.personal_api
+			.prepare(blogSchema)
+			.bind(
+				prepareValue(getTimestamp(inputQueue)),
+				prepareValue(inputQueue.Tags),
+				prepareValue(inputQueue.Creator),
+				prepareValue(inputQueue.Title),
+				prepareValue(inputQueue.Body),
+				prepareValue(inputQueue.Location),
+			)
+			.run();
+		return result.success;
+	} else if (kind == 'security') {
+		const inputQueue = data as SecurityFormat;
+		result = await env.personal_api
+			.prepare(securitySchema)
+			.bind(prepareValue(inputQueue.Name), prepareValue(inputQueue.UsedFor), prepareValue(inputQueue.Type), prepareValue(inputQueue.Value))
+			.run();
+		return result.success;
+	}
+	return false;
 }
