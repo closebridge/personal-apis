@@ -1,4 +1,4 @@
-import sqlMolester from '../sql/sqlMolester';
+import { getDataFromDb } from '../sql/sqlMolester';
 import { Env } from '..';
 
 // @ts-ignore
@@ -25,7 +25,7 @@ type BlogStructure = {
 export default async function getBlogPosts(argument: BlogArgument, env: Env): Promise<string | false> {
 	if (argument.amount > 15) return false;
 
-	const dbFetch = await sqlMolester(env);
+	const dbFetch = await getDataFromDb(env, 'blog');
 
 	if (dbFetch.success !== true) {
 		return dbFetch.success;
