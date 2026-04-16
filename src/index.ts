@@ -25,15 +25,18 @@ export default {
 
 		const { pathname } = new URL(request.url);
 
-		const [, section, sub, format] = pathname.split('/');
+		const pathSegments = pathname.split('/').filter((segment) => segment.length > 0);
+		const section = pathSegments[0];
+		const sub = pathSegments[1];
+		const format = pathSegments[2];
 
 		if (section === 'personal' && sub === 'blog') {
 			const url = new URL(request.url);
 			const requestArguments = url.search ? url.search.slice(1).split('&') : []; // things after the `?` args
-			const formatRequestType = format.split('?')[0]; // things like /json
+			const formatRequestType = format ? format.split('?')[0] : null; // things like /json
 
 			// post req related
-			if (formatRequestType == 'edit') {
+			if (formatRequestType === 'edit') {
 				if (request.method !== 'POST') return new Response('wrong method bozo', { status: 405 });
 				if (request.headers.get('content-type') !== 'application/json') return new Response('no content-type?', { status: 415 });
 
@@ -66,7 +69,7 @@ export default {
 				// with another bajillion more checks, 💀
 				const pendingData = payloadRequest.articleContents as BlogFormat;
 				if (actionType == 'add') {
-					if (!pendingData.Body && !pendingData.Title && !pendingData.Tags && !pendingData.Creator)
+					if (!pendingData.Body || !pendingData.Title || !pendingData.Tags || !pendingData.Creator)
 						return new Response('missing fields', { status: 400 });
 
 					const result = await blogEditor(env, {
@@ -101,43 +104,80 @@ export default {
 			}
 
 			// simple ass get req
-			if ((formatRequestType === 'json' || formatRequestType === 'xml') && request.method == 'GET') {
-				let [amount, tag]: [number, string | null] = [10, null];
-				requestArguments
-					? requestArguments.forEach((e) => {
-							const splitOut = e.split('=');
-							splitOut[0].includes('amount') ? (amount = Number(splitOut[1])) : (tag = String(splitOut[1]) ?? null);
-						})
-					: [10, null];
+			if (formatRequestType && (formatRequestType === 'json' || formatRequestType === 'xml') && request.method == 'GET') {
+				let amount = 10;
+				let tag: string | null = null;
+
+				if (requestArguments) {
+					for (const arg of requestArguments) {
+						const [key, value] = arg.split('=');
+						if (key === 'amount') {
+							amount = Number(value);
+						} else if (key === 'tag') {
+							tag = value || null;
+						}
+					}
+				}
 
 				if (amount > 15) return new Response('too much!!!111', { status: 429 });
 
-				if (format !== 'xml' && format !== 'json') return new Response('incorrect type @blog', { status: 404 });
+				if (formatRequestType !== 'xml' && formatRequestType !== 'json') return new Response('incorrect type @blog', { status: 404 });
 
-				const blogPostResult = await getBlogPosts({ amount: amount, format: format }, env);
+				const blogPostResult = await getBlogPosts({ amount: amount, format: formatRequestType, tag: tag ?? '' }, env);
 
 				if (blogPostResult)
 					return new Response(blogPostResult, {
-						headers: { 'Content-Type': format == 'json' ? 'application/json' : 'application/rss+xml' },
+						headers: { 'Content-Type': formatRequestType == 'json' ? 'application/json' : 'application/rss+xml' },
 					});
 				else return new Response('failed');
 			}
 		}
 
+		if (!section) {
+			return new Response('endpoints as: /personal/blog/{json|xml|edit}, /personal/security', {
+				status: 200,
+				headers: { 'Content-Type': 'text/plain' },
+			});
+		}
+
 		if (section === 'personal' && sub === 'security') {
 			if (request.method !== 'POST') return new Response('wrong method', { status: 405 });
 
-			const payload: GenerateSecurity = await request.json();
+			let payload: GenerateSecurity | null = null;
+			try {
+				payload = await request.json();
+			} catch (error) {
+				return new Response('wheres the fucking payload then?', { status: 400 });
+			}
 
-			if (!payload.Authentication) return new Response('egg and chicken, again, wheres authentication?', { status: 401 });
+			if (!payload?.Authentication) return new Response('egg and chicken, again, wheres authentication?', { status: 401 });
 
-			if (payload.Type.toLowerCase() == 'totp') {
+			if (!payload.Type) return new Response('missing security type', { status: 400 });
+
+			if (payload.Type.toLowerCase() === 'totp') {
 				const [isGenerated, totp] = await timeOTP('generate', env);
 				if (!isGenerated) return new Response('totp failed to generate', { status: 401 });
 				return new Response(`otp generated: otpauth://totp/ngsw-blog?secret=${totp}&issuer=ngsw-blog`, {
 					status: 200,
+					headers: { 'Content-Type': 'text/plain' },
 				});
 			}
+
+			return new Response('unsupported security type', { status: 400 });
+		}
+
+		if (section === 'personal' && !sub) {
+			return new Response('endpoints for personal: /personal/blog, /personal/security', {
+				status: 200,
+				headers: { 'Content-Type': 'text/plain' },
+			});
+		}
+
+		if (section === 'personal' && sub === 'blog' && !format) {
+			return new Response('endpoints for personal/blog: /personal/blog/{json|xml|edit}', {
+				status: 200,
+				headers: { 'Content-Type': 'text/plain' },
+			});
 		}
 
 		if (section === 'personal') return new Response('not found @personal', { status: 404 });
