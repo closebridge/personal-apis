@@ -4,3 +4,8 @@ export type SecurityFormat = {
 	Type: string;
 	Value: string;
 };
+
+export type GenerateSecurity = {
+	Type: 'totp' | 'oauth2';
+	Authentication: number;
+};

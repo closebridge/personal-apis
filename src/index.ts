@@ -10,6 +10,7 @@ import getBlogPosts from './blog/blogConverter';
 import blogEditor from './blog/blogEditor';
 import timeOTP from './security/timeOTP';
 import { type BlogFormat, type BlogUpdate } from './blog/blogFormat';
+import { type GenerateSecurity } from './security/securityType';
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
@@ -60,8 +61,6 @@ export default {
 				const isVerified = await timeOTP('verify', env, payload.authenticate);
 
 				if (!isVerified[0]) return new Response('close, but still who the fuck are you?', { status: 401 });
-
-				// const generatedOTP = await timeOTP('generate', env); << THIS WORKS.
 
 				// after like bajillion checks later, we can actually like molest the database frfr
 				// with another bajillion more checks, 💀
@@ -122,6 +121,22 @@ export default {
 						headers: { 'Content-Type': format == 'json' ? 'application/json' : 'application/rss+xml' },
 					});
 				else return new Response('failed');
+			}
+		}
+
+		if (section === 'personal' && sub === 'security') {
+			if (request.method !== 'POST') return new Response('wrong method', { status: 405 });
+
+			const payload: GenerateSecurity = await request.json();
+
+			if (!payload.Authentication) return new Response('egg and chicken, again, wheres authentication?', { status: 401 });
+
+			if (payload.Type.toLowerCase() == 'totp') {
+				const [isGenerated, totp] = await timeOTP('generate', env);
+				if (!isGenerated) return new Response('totp failed to generate', { status: 401 });
+				return new Response(`otp generated: otpauth://totp/ngsw-blog?secret=${totp}&issuer=ngsw-blog`, {
+					status: 200,
+				});
 			}
 		}
 
