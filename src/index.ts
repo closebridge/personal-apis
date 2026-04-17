@@ -11,6 +11,7 @@ import blogEditor from './blog/blogEditor';
 import timeOTP from './security/timeOTP';
 import { type BlogFormat, type BlogUpdate } from './blog/blogFormat';
 import { type GenerateSecurity } from './security/securityType';
+import { getDataFromDb, getBlogStatus } from './sql/sqlMolester';
 
 const corsHeaders = {
 	'Access-Control-Allow-Origin': '*',
@@ -133,9 +134,27 @@ export default {
 			}
 
 			// simple ass get req
-			if (formatRequestType && (formatRequestType === 'json' || formatRequestType === 'xml') && request.method == 'GET') {
+			if (
+				formatRequestType &&
+				(formatRequestType === 'json' || formatRequestType === 'xml' || formatRequestType === 'info') &&
+				request.method == 'GET'
+			) {
 				let amount = 10;
 				let tag: string | null = null;
+
+				if (formatRequestType === 'info') {
+					const result = await getBlogStatus(env);
+					let blogInfoString: object = {};
+					if (result) {
+						for (const blogMeta of result.results) {
+							console.log(blogMeta);
+							blogInfoString = { ...blogInfoString, [blogMeta.Type as keyof typeof blogInfoString]: blogMeta.Value };
+						}
+					} else return new Response('no blog info found', { status: 404, headers: corsHeaders });
+
+					if (Object.keys(blogInfoString).length)
+						return new Response(JSON.stringify(blogInfoString), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/xml' } });
+				}
 
 				if (requestArguments) {
 					for (const arg of requestArguments) {
@@ -150,7 +169,7 @@ export default {
 
 				if (amount > 15) return new Response('too much!!!111', { status: 429, headers: corsHeaders });
 
-				if (formatRequestType !== 'xml' && formatRequestType !== 'json')
+				if (formatRequestType !== 'xml' && formatRequestType !== 'json' && formatRequestType !== 'info')
 					return new Response('incorrect type @blog', { status: 404, headers: corsHeaders });
 
 				const blogPostResult = await getBlogPosts({ amount: amount, format: formatRequestType, tag: tag ?? '' }, env);

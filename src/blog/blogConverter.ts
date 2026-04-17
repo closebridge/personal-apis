@@ -6,7 +6,7 @@ import { toXML } from 'jstoxml';
 
 type BlogArgument = {
 	amount: number;
-	format: 'json' | 'xml';
+	format: 'json' | 'xml' | 'info';
 	tag?: string;
 	author?: string;
 	date?: [number, number]; // basically [from, to]

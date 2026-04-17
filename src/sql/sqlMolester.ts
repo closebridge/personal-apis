@@ -3,10 +3,22 @@ import blogEditor from '../blog/blogEditor';
 import { type BlogFormat } from '../blog/blogFormat';
 import { type SecurityFormat } from '../security/securityType';
 
+const dbTableNamingPretext = {
+	blog: 'Blog',
+	totp: 'Security',
+	tags: 'Security',
+	blogInfo: 'Blog',
+};
+
 export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags') {
 	const result = await env.personal_api
-		.prepare(`SELECT * FROM ${kind == 'blog' ? 'Blog' : 'Security'} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''}`)
+		.prepare(`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''}`)
 		.all();
+	return result ?? false;
+}
+
+export async function getBlogStatus(env: Env) {
+	const result = await env.personal_api.prepare(`SELECT * FROM BlogInfo`).all();
 	return result ?? false;
 }
 
@@ -65,7 +77,7 @@ export async function countDbTable(
 	kind: 'blog' | 'security',
 	filter?: [string | number, string | number],
 ): Promise<number | string | false> {
-	const sqlPrompt = `SELECT COUNT(*) FROM ${kind == 'blog' ? 'Blog' : 'Security'} ${filter ? `WHERE ${filter[0]} = ?` : ''}`;
+	const sqlPrompt = `SELECT COUNT(*) FROM ${dbTableNamingPretext[kind as keyof typeof dbTableNamingPretext]} ${filter ? `WHERE ${filter[0]} = ?` : ''}`;
 	const result = filter
 		? await env.personal_api.prepare(sqlPrompt).bind(prepareValue(filter?.[1])).all()
 		: await env.personal_api.prepare(sqlPrompt).all();
