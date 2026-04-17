@@ -25,7 +25,7 @@ type BlogStructure = {
 export default async function getBlogPosts(argument: BlogArgument, env: Env, postIdRequested?: number): Promise<string | false> {
 	if (argument.amount > 15) return false;
 
-	const dbFetch = await getDataFromDb(env, 'blog', postIdRequested);
+	const dbFetch = await getDataFromDb(env, 'blog', postIdRequested ? postIdRequested : 0, argument.amount ? argument.amount : undefined);
 
 	if (dbFetch.success !== true) {
 		return dbFetch.success;

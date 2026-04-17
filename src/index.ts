@@ -160,10 +160,10 @@ export default {
 				if (requestArguments) {
 					for (const arg of requestArguments) {
 						const [key, value] = arg.split('=');
-						// console.log([key, value]);
-						if (key === 'amount') amount = Number(value);
-						else if (key === 'tag') tag = value || null;
-						else if (key === 'postid') postIdRequested = Number(value) ?? 0;
+						console.log([key, value]);
+						if (key.toLowerCase() == 'amount') amount = Number(value);
+						else if (key.toLowerCase() == 'tag') tag = value || null;
+						else if (key.toLowerCase() == 'postid') postIdRequested = Number(value);
 					}
 				}
 

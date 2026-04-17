@@ -10,14 +10,23 @@ const dbTableNamingPretext = {
 	blogInfo: 'Blog',
 };
 
-export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id?: number) {
-	const result = await env.personal_api
-		.prepare(
-			`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${id !== undefined && kind === 'blog' ? 'WHERE PostId = ?' : ''}`,
-		)
-		.bind(id)
-		.all();
-	return result ?? false;
+export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id?: number, limitAmount?: number) {
+	if (id) {
+		const result = await env.personal_api
+			.prepare(
+				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${kind === 'blog' ? 'WHERE PostId = ?' : ''} ${limitAmount ? 'LIMIT ' + limitAmount : ''}`,
+			)
+			.bind(id)
+			.all();
+		return result ?? false;
+	} else {
+		const result = await env.personal_api
+			.prepare(
+				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${limitAmount ? 'LIMIT ' + limitAmount : ''}`,
+			)
+			.all();
+		return result ?? false;
+	}
 }
 
 export async function getBlogStatus(env: Env) {
