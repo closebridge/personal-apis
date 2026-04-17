@@ -3,7 +3,7 @@ import blogEditor from '../blog/blogEditor';
 import { type BlogFormat } from '../blog/blogFormat';
 import { type SecurityFormat } from '../security/securityType';
 
-export async function getDataFromDb(env: Env, kind: 'blog' | 'totp') {
+export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags') {
 	const result = await env.personal_api
 		.prepare(`SELECT * FROM ${kind == 'blog' ? 'Blog' : 'Security'} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''}`)
 		.all();
@@ -58,6 +58,18 @@ export async function updateDb(env: Env, itemId: number, data: BlogFormat | Secu
 export async function deleteFromDb(env: Env, postId: number, kind: 'blog'): Promise<boolean> {
 	const result = await env.personal_api.prepare(`DELETE FROM Blog WHERE PostId = ?`).bind(postId).run();
 	return result.success;
+}
+
+export async function countDbTable(
+	env: Env,
+	kind: 'blog' | 'security',
+	filter?: [string | number, string | number],
+): Promise<number | string | false> {
+	const sqlPrompt = `SELECT COUNT(*) FROM ${kind == 'blog' ? 'Blog' : 'Security'} ${filter ? `WHERE ${filter[0]} = ?` : ''}`;
+	const result = filter
+		? await env.personal_api.prepare(sqlPrompt).bind(prepareValue(filter?.[1])).all()
+		: await env.personal_api.prepare(sqlPrompt).all();
+	return (result.results[0]['COUNT(*)'] as string | number) ?? false;
 }
 
 export async function insertIntoDb(env: Env, data: BlogFormat | SecurityFormat, kind: 'blog' | 'security'): Promise<boolean> {
