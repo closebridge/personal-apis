@@ -10,9 +10,12 @@ const dbTableNamingPretext = {
 	blogInfo: 'Blog',
 };
 
-export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags') {
+export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id?: number) {
 	const result = await env.personal_api
-		.prepare(`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''}`)
+		.prepare(
+			`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${id !== undefined && kind === 'blog' ? 'WHERE PostId = ?' : ''}`,
+		)
+		.bind(id)
 		.all();
 	return result ?? false;
 }

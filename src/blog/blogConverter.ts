@@ -22,10 +22,10 @@ type BlogStructure = {
 	Location: string;
 };
 
-export default async function getBlogPosts(argument: BlogArgument, env: Env): Promise<string | false> {
+export default async function getBlogPosts(argument: BlogArgument, env: Env, postIdRequested?: number): Promise<string | false> {
 	if (argument.amount > 15) return false;
 
-	const dbFetch = await getDataFromDb(env, 'blog');
+	const dbFetch = await getDataFromDb(env, 'blog', postIdRequested);
 
 	if (dbFetch.success !== true) {
 		return dbFetch.success;

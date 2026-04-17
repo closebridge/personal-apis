@@ -141,6 +141,7 @@ export default {
 			) {
 				let amount = 10;
 				let tag: string | null = null;
+				let postIdRequested: number = 0;
 
 				if (formatRequestType === 'info') {
 					const result = await getBlogStatus(env);
@@ -159,11 +160,10 @@ export default {
 				if (requestArguments) {
 					for (const arg of requestArguments) {
 						const [key, value] = arg.split('=');
-						if (key === 'amount') {
-							amount = Number(value);
-						} else if (key === 'tag') {
-							tag = value || null;
-						}
+						// console.log([key, value]);
+						if (key === 'amount') amount = Number(value);
+						else if (key === 'tag') tag = value || null;
+						else if (key === 'postid') postIdRequested = Number(value) ?? 0;
 					}
 				}
 
@@ -172,7 +172,7 @@ export default {
 				if (formatRequestType !== 'xml' && formatRequestType !== 'json' && formatRequestType !== 'info')
 					return new Response('incorrect type @blog', { status: 404, headers: corsHeaders });
 
-				const blogPostResult = await getBlogPosts({ amount: amount, format: formatRequestType, tag: tag ?? '' }, env);
+				const blogPostResult = await getBlogPosts({ amount: amount, format: formatRequestType, tag: tag ?? '' }, env, postIdRequested);
 
 				if (blogPostResult)
 					return new Response(blogPostResult, {
