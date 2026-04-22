@@ -11,7 +11,7 @@ import blogEditor from './blog/blogEditor';
 import timeOTP from './security/timeOTP';
 import { type BlogFormat, type BlogUpdate } from './blog/blogFormat';
 import { type SecurityPayload } from './security/securityType';
-import { getDataFromDb, getBlogStatus } from './sql/sqlMolester';
+import { getDataFromDb, getBlogStatus, getBlogTags } from './sql/sqlMolester';
 
 const corsHeaders = {
 	'Access-Control-Allow-Origin': '*',
@@ -180,6 +180,12 @@ export default {
 					});
 				else return new Response('failed', { headers: corsHeaders });
 			} else if (formatRequestType === 'tags') {
+				const tagsResult = await getBlogTags(env);
+				if (tagsResult)
+					return new Response(JSON.stringify(tagsResult), {
+						headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+					});
+				else return new Response('failed', { headers: corsHeaders });
 			}
 		}
 

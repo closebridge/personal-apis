@@ -125,3 +125,35 @@ export async function insertIntoDb(env: Env, data: BlogFormat | SecurityFormat, 
 	}
 	return false;
 }
+
+export async function getBlogTags(env: Env): Promise<Record<string, number> | false> {
+	const sqlPrompt: string = 'SELECT Tags FROM Blog LIMIT 50';
+	const result = await env.personal_api.prepare(sqlPrompt).all();
+
+	if (result.results.length < 0) return false;
+
+	// const tags = result.results.map((row) => row.Tags as string).join(', ');
+	const tagCounts: Record<string, number> = {};
+
+	try {
+		for (const row of result.results) {
+			const tags = row.Tags as string;
+			if (!tags || tags.trim() === '') {
+				continue;
+			}
+
+			const tagList = tags
+				.split(',')
+				.map((tag) => tag.trim())
+				.filter((tag) => tag !== '');
+
+			for (const tag of tagList) {
+				tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+			}
+		}
+
+		return tagCounts;
+	} catch (err) {
+		return false;
+	}
+}
