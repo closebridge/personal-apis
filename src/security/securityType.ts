@@ -5,7 +5,7 @@ export type SecurityFormat = {
 	Value: string;
 };
 
-export type GenerateSecurity = {
-	Type: 'totp' | 'oauth2';
+export type SecurityPayload = {
+	Type: 'totp' | 'oauth2' | 'verify';
 	Authentication: number;
 };

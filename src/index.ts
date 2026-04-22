@@ -10,7 +10,7 @@ import getBlogPosts from './blog/blogConverter';
 import blogEditor from './blog/blogEditor';
 import timeOTP from './security/timeOTP';
 import { type BlogFormat, type BlogUpdate } from './blog/blogFormat';
-import { type GenerateSecurity } from './security/securityType';
+import { type SecurityPayload } from './security/securityType';
 import { getDataFromDb, getBlogStatus } from './sql/sqlMolester';
 
 const corsHeaders = {
@@ -193,7 +193,7 @@ export default {
 		if (section === 'personal' && sub === 'security') {
 			if (request.method !== 'POST') return new Response('wrong method', { status: 405, headers: corsHeaders });
 
-			let payload: GenerateSecurity | null = null;
+			let payload: SecurityPayload | null = null;
 			try {
 				payload = await request.json();
 			} catch (error) {
@@ -205,6 +205,14 @@ export default {
 
 			if (!payload.Type || typeof payload.Type !== 'string')
 				return new Response('missing security type', { status: 400, headers: corsHeaders });
+
+			if (payload.Type.toLowerCase() === 'verify') {
+				if (!payload.Authentication || typeof payload.Authentication !== 'number')
+					return new Response('missing verification code', { status: 400, headers: corsHeaders });
+				const [isValid] = await timeOTP('verify', env, payload.Authentication);
+				if (!isValid) return new Response('it said false, incorrect authentication', { status: 401, headers: corsHeaders });
+				return new Response('verification successful, somehow', { status: 200, headers: corsHeaders });
+			}
 
 			if (payload.Type.toLowerCase() === 'totp') {
 				const [isGenerated, totp] = await timeOTP('generate', env);
