@@ -1,5 +1,5 @@
 import { Env } from '..';
-import blogEditor from '../blog/blogEditor';
+import { type BlogStatusArgs, blogStatusPretext, blogEditor } from '../blog/blogEditor';
 import { type BlogFormat } from '../blog/blogFormat';
 import { type SecurityFormat } from '../security/securityType';
 
@@ -27,6 +27,15 @@ export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id
 			.all();
 		return result ?? false;
 	}
+}
+
+export async function setBlogStatus(env: Env, updateData: BlogStatusArgs) {
+	console.log(blogStatusPretext[updateData.updateWhat]);
+	const result = await env.personal_api
+		.prepare(`UPDATE BlogInfo SET Value = ? WHERE Type = '${blogStatusPretext[updateData.updateWhat]}'`)
+		.bind(updateData.toValue)
+		.all();
+	return result ?? false;
 }
 
 export async function getBlogStatus(env: Env) {

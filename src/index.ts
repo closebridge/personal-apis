@@ -7,11 +7,11 @@ export interface Env {
 }
 
 import getBlogPosts from './blog/blogConverter';
-import blogEditor from './blog/blogEditor';
 import timeOTP from './security/timeOTP';
 import { type BlogFormat, type BlogUpdate } from './blog/blogFormat';
 import { type SecurityPayload } from './security/securityType';
 import { getDataFromDb, getBlogStatus, getBlogTags } from './sql/sqlMolester';
+import { type BlogStatusArgs, type BlogStatusPayload, blogStatusEditor, blogEditor } from './blog/blogEditor';
 
 const corsHeaders = {
 	'Access-Control-Allow-Origin': '*',
@@ -51,6 +51,30 @@ export default {
 			const formatRequestType = format ? format.split('?')[0] : null; // things like /json
 
 			// post req related
+
+			if (formatRequestType === 'info' && request.method == 'POST') {
+				console.log('POST /info hit');
+				let payload: null | BlogStatusPayload = null;
+				try {
+					payload = await request.json();
+				} catch (error) {
+					return new Response('wheres the fucking payload then?', { status: 400, headers: corsHeaders });
+				}
+
+				if (payload?.authentication) {
+					return new Response('its "authenticate", not "authentication", dumb fuck', { status: 401, headers: corsHeaders });
+				} else if (!payload?.authenticate) {
+					return new Response('who the fuck are you?', { status: 401, headers: corsHeaders });
+				}
+
+				const isVerified = await timeOTP('verify', env, payload.authenticate);
+				if (!isVerified[0]) return new Response('close, but still who the fuck are you?', { status: 401, headers: corsHeaders });
+
+				const result = await blogStatusEditor(env, payload.updateItems as Array<BlogStatusArgs>);
+				if (!result[0]) return new Response('failed to update blog status', { status: 500, headers: corsHeaders });
+				return new Response('blog status updated', { status: 200, headers: corsHeaders });
+			}
+
 			if (formatRequestType === 'edit') {
 				if (request.method !== 'POST') return new Response('wrong method bozo', { status: 405, headers: corsHeaders });
 				if (request.headers.get('content-type') !== 'application/json')
@@ -169,7 +193,7 @@ export default {
 
 				if (amount > 15) return new Response('too much!!!111', { status: 429, headers: corsHeaders });
 
-				if (formatRequestType !== 'xml' && formatRequestType !== 'json' && formatRequestType !== 'info')
+				if (formatRequestType !== 'xml' && formatRequestType !== 'json' && formatRequestType !== 'info' && formatRequestType !== 'tags')
 					return new Response('incorrect type @blog', { status: 404, headers: corsHeaders });
 
 				const blogPostResult = await getBlogPosts({ amount: amount, format: formatRequestType, tag: tag ?? '' }, env, postIdRequested);
@@ -190,7 +214,7 @@ export default {
 		}
 
 		if (!section) {
-			return new Response('endpoints as: /personal/blog/{json|xml|edit|tags}, /personal/security', {
+			return new Response('endpoints as: /personal/blog/{json|xml|edit|tags|info}, /personal/security', {
 				status: 200,
 				headers: { ...corsHeaders, 'Content-Type': 'text/plain' },
 			});
@@ -240,7 +264,7 @@ export default {
 		}
 
 		if (section === 'personal' && sub === 'blog' && !format) {
-			return new Response('endpoints for personal/blog: /personal/blog/{json|xml|edit|tags}', {
+			return new Response('endpoints for personal/blog: /personal/blog/{json|xml|edit|tags|info}', {
 				status: 200,
 				headers: { ...corsHeaders, 'Content-Type': 'text/plain' },
 			});

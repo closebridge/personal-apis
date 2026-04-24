@@ -11,6 +11,7 @@ export type BlogFormat = {
 
 export type BlogUpdate = {
 	authenticate: number;
+	authentication?: number;
 	action: 'edit' | 'remove' | 'add';
 	postId?: number;
 	articleContents?: BlogFormat;
