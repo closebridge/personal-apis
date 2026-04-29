@@ -25,7 +25,7 @@
 			"name": "NO_SPAMMIE",
 			"namespace_id": "67",
 			"simple": {
-				"limit": 10,
+				"limit": 25,
 				"period": 60,
 			},
 		},

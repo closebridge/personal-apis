@@ -10,13 +10,14 @@ type BlogEditArguments = {
 
 export const blogStatusPretext = {
 	comment: 'Comment',
-	favPostId: 'favPostId',
-	commentTimeStamp: 'commentTimeStamp',
-	commentOwner: 'commentOwner',
+	favPostId: 'FavoritePostId',
+	favePostId: 'FavoritePostId',
+	commentTimeStamp: 'CommentTimestamp',
+	commentOwner: 'CommentOwner',
 };
 
 export interface BlogStatusArgs {
-	updateWhat: 'comment' | 'favPostId' | 'commentTimeStamp' | 'commentOwner';
+	updateWhat: 'Comment' | 'FavoritePostId' | 'CommentTimeStamp' | 'CommentOwner';
 	toValue: string | number;
 }
 

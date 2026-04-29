@@ -30,11 +30,13 @@ export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id
 }
 
 export async function setBlogStatus(env: Env, updateData: BlogStatusArgs) {
-	console.log(blogStatusPretext[updateData.updateWhat]);
+	// console.log(updateData.updateWhat);
+	// console.log(blogStatusPretext[updateData.updateWhat]);
 	const result = await env.personal_api
 		.prepare(`UPDATE BlogInfo SET Value = ? WHERE Type = '${blogStatusPretext[updateData.updateWhat]}'`)
 		.bind(updateData.toValue)
 		.all();
+	// console.log(result);
 	return result ?? false;
 }
 

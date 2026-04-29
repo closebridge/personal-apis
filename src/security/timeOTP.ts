@@ -81,8 +81,8 @@ export default async function totp(method: 'verify' | 'generate', env: Env, secr
 			return [false, null];
 		}
 
-		// -1/1 sec time drift
-		const timeSteps = [0, -1, 1];
+		// -20/+20 sec time drift
+		const timeSteps = [0, -20, 20];
 		const currentTimeStep = Math.floor(Date.now() / 1000 / 30);
 
 		for (const totpRecord of encryptedTOTP.results) {
