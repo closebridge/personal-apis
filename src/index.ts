@@ -94,9 +94,13 @@ export default {
 					return new Response('who the fuck are you?', { status: 401, headers: corsHeaders });
 				}
 
+				if (payload?.authentication) {
+					return new Response('its "authenticate", not "authentication", dumb fuck', { status: 400, headers: corsHeaders });
+				}
+
 				if (actionType !== 'add' && actionType !== 'edit' && actionType !== 'remove')
 					return new Response(
-						'so you want to make privileged post calls, but you cant even figured what u want? o yea right let me `await openai.chat.completions.create({model: "gpt-5.4-pro", message: "can u check wtf is this su dude wants?"})`, LMFAO MATIKANETANNHAUSER ON THE KEYBOARD CHURNING SLOPS RN',
+						'so you want to make privileged post calls, but you cant even figured what u want? o yea right let me `await openai.chat.completions.create({model: "gpt-5.4-pro", message: "can u check wtf is this su dude wants?"})`, LMFAO MATIKANETANNHAUSER ON THE KEYBOARD CHURNING SLOPS RN\n\n\nsorry i was being such a meanie, u have to provide the action type (add, edit, or remove) you want to perform ya?',
 						{ status: 400, headers: corsHeaders },
 					);
 
@@ -125,6 +129,8 @@ export default {
 						return new Response('no append op was made, check ur shit mane', { status: 400, headers: corsHeaders });
 					}
 				} else if (actionType == 'edit') {
+					if (!payloadRequest.postId) return new Response('missing post id', { status: 400, headers: corsHeaders });
+
 					const result = await blogEditor(env, {
 						action: 'edit',
 						postId: payloadRequest.postId,
