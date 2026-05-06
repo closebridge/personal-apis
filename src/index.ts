@@ -113,8 +113,11 @@ export default {
 				// with another bajillion more checks, 💀
 				const pendingData = payloadRequest.articleContents as BlogFormat;
 				if (actionType == 'add') {
-					if (!pendingData.Body || !pendingData.Title || !pendingData.Tags || !pendingData.Creator)
-						return new Response('missing fields', { status: 400, headers: corsHeaders });
+					if (!pendingData.Body) pendingData.Body = '';
+					if (!pendingData.Title) pendingData.Title = 'empty title...';
+					if (!pendingData.Tags) pendingData.Tags = '';
+					if (!pendingData.Creator) pendingData.Creator = 'closebridge';
+					if (!pendingData.Timestamp) pendingData.Timestamp = Date.now();
 
 					const result = await blogEditor(env, {
 						action: 'add',
