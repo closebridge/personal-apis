@@ -5,6 +5,7 @@ import { getDataFromDb, insertIntoDb, setBlogStatus, updateDb, deleteFromDb, ent
 type BlogEditArguments = {
 	action: 'remove' | 'add' | 'edit';
 	postId?: number;
+	PostId?: number;
 	articleContents: BlogFormat | null;
 };
 
@@ -63,7 +64,8 @@ export type ErrorReturnCodes =
 	| 6.1 // malformed/missing field
 	| 6.2 // postId missing
 	| 6.3 // post does not exist
-	| 6.4; // post removal failed (uh)
+	| 6.4 // post removal failed (uh)
+	| 6.5; // its postId, not PostId, dumbass
 
 export async function blogStatusEditor(env: Env, updateData?: Array<BlogStatusArgs>): Promise<[boolean, ErrorReturnCodes]> {
 	console.log('blogStatusEditor called');
@@ -84,12 +86,14 @@ export async function blogStatusEditor(env: Env, updateData?: Array<BlogStatusAr
 export async function blogEditor(env: Env, args: BlogEditArguments): Promise<[boolean, number | ErrorReturnCodes]> {
 	// INSERT INTO Blog (PostId, Timestamp, Tags, Creator, Title, Body, Location)
 	if (args.action == 'add') {
+		if (args.PostId) return [false, 6.5];
 		if (!args.articleContents) return [false, 4.1];
 
 		const result = await insertIntoDb(env, args.articleContents, 'blog');
 		if (result) return [result, 3];
 		else return [false, 4.4];
 	} else if (args.action == 'edit') {
+		if (args.PostId) return [false, 6.5];
 		if (!args.postId || !args.articleContents) return [false, 5.1];
 
 		// check for article's existence
@@ -100,6 +104,7 @@ export async function blogEditor(env: Env, args: BlogEditArguments): Promise<[bo
 		if (result) return [result, 5];
 		else return [false, 5.5];
 	} else if (args.action == 'remove') {
+		if (args.PostId) return [false, 6.5];
 		if (!args.postId) return [false, 6.2];
 
 		// check for article's existence

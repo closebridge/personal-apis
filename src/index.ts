@@ -129,7 +129,7 @@ export default {
 							headers: { ...corsHeaders, 'Content-Type': 'application/json' },
 						});
 					} else {
-						return new Response('no append op was made, check ur shit mane', { status: 400, headers: corsHeaders });
+						return new Response(`no remove op was made, check ur shit mane (${result[1]})`, { status: 400, headers: corsHeaders });
 					}
 				} else if (actionType == 'edit') {
 					if (!payloadRequest.postId) return new Response('missing post id', { status: 400, headers: corsHeaders });
@@ -144,11 +144,12 @@ export default {
 							status: 200,
 							headers: { ...corsHeaders, 'Content-Type': 'application/json' },
 						});
-					else return new Response('no append op was made, check ur shit mane', { status: 400, headers: corsHeaders });
+					else return new Response(`no remove op was made, check ur shit mane (${result[1]})`, { status: 400, headers: corsHeaders });
 				} else if (actionType == 'remove') {
 					const result = await blogEditor(env, {
 						action: 'remove',
-						postId: payloadRequest.postId,
+						postId: payloadRequest?.articleContents?.postId ?? undefined,
+						PostId: payloadRequest?.articleContents?.PostId ?? undefined,
 						articleContents: null,
 					});
 					console.log(result);
@@ -157,7 +158,7 @@ export default {
 							status: 200,
 							headers: { ...corsHeaders, 'Content-Type': 'application/json' },
 						});
-					else return new Response('no remove op was made, check ur shit mane', { status: 400, headers: corsHeaders });
+					else return new Response(`no remove op was made, check ur shit mane (${result[1]})`, { status: 400, headers: corsHeaders });
 				}
 
 				return new Response(JSON.stringify(payload), {

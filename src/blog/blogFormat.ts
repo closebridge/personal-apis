@@ -1,6 +1,7 @@
 export type BlogFormat = {
 	// whats the point of types if all of them are optional again?
 	PostId?: number;
+	postId?: number;
 	Timestamp?: number;
 	Tags?: string;
 	Creator?: string;
@@ -14,5 +15,6 @@ export type BlogUpdate = {
 	authentication?: number;
 	action: 'edit' | 'remove' | 'add';
 	postId?: number;
+	PostId?: number;
 	articleContents?: BlogFormat;
 };
