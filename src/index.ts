@@ -148,8 +148,7 @@ export default {
 				} else if (actionType == 'remove') {
 					const result = await blogEditor(env, {
 						action: 'remove',
-						postId: payloadRequest?.articleContents?.postId ?? undefined,
-						PostId: payloadRequest?.articleContents?.PostId ?? undefined,
+						postId: payloadRequest?.articleContents?.postId ?? payloadRequest.postId,
 						articleContents: null,
 					});
 					console.log(result);
