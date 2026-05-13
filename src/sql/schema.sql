@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS Blog (
 	Title TEXT,
 	Body TEXT,
 	Location TEXT,
+	Group TEXT,
+
 );
 
 CREATE TABLE IF NOT EXISTS BlogInfo (

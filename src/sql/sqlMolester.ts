@@ -11,18 +11,20 @@ const dbTableNamingPretext = {
 };
 
 export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id?: number, limitAmount?: number) {
+	if (!['blog', 'totp', 'tags'].filter((item: string): boolean => item == kind)) return false;
+
 	if (id) {
 		const result = await env.personal_api
 			.prepare(
-				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${kind === 'blog' ? 'WHERE PostId = ?' : ''} ${limitAmount ? 'LIMIT ' + limitAmount : ''}`,
+				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${kind === 'blog' ? 'WHERE PostId = ?' : ''} ${limitAmount && !isNaN(limitAmount) ? 'LIMIT ' + limitAmount : ''}`,
 			)
-			.bind(id)
+			.bind(id ?? 1)
 			.all();
 		return result ?? false;
 	} else {
 		const result = await env.personal_api
 			.prepare(
-				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${limitAmount ? 'LIMIT ' + limitAmount : ''}`,
+				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${limitAmount && !isNaN(limitAmount) ? 'LIMIT ' + limitAmount : ''}`,
 			)
 			.all();
 		return result ?? false;
@@ -32,8 +34,11 @@ export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id
 export async function setBlogStatus(env: Env, updateData: BlogStatusArgs) {
 	// console.log(updateData.updateWhat);
 	// console.log(blogStatusPretext[updateData.updateWhat]);
+	const updateType = blogStatusPretext[updateData.updateWhat as keyof typeof blogStatusPretext];
+	if (!updateType) return false;
+
 	const result = await env.personal_api
-		.prepare(`UPDATE BlogInfo SET Value = ? WHERE Type = '${blogStatusPretext[updateData.updateWhat]}'`)
+		.prepare(`UPDATE BlogInfo SET Value = ? WHERE Type = '${updateType}'`)
 		.bind(updateData.toValue)
 		.all();
 	// console.log(result);
@@ -95,17 +100,17 @@ export async function deleteFromDb(env: Env, postId: number, kind: 'blog'): Prom
 	return result.success;
 }
 
-export async function countDbTable(
-	env: Env,
-	kind: 'blog' | 'security',
-	filter?: [string | number, string | number],
-): Promise<number | string | false> {
-	const sqlPrompt = `SELECT COUNT(*) FROM ${dbTableNamingPretext[kind as keyof typeof dbTableNamingPretext]} ${filter ? `WHERE ${filter[0]} = ?` : ''}`;
-	const result = filter
-		? await env.personal_api.prepare(sqlPrompt).bind(prepareValue(filter?.[1])).all()
-		: await env.personal_api.prepare(sqlPrompt).all();
-	return (result.results[0]['COUNT(*)'] as string | number) ?? false;
-}
+// export async function countDbTable(
+// 	env: Env,
+// 	kind: 'blog' | 'security',
+// 	filter?: [string | number, string | number],
+// ): Promise<number | string | false> {
+// 	const sqlPrompt = `SELECT COUNT(*) FROM ${dbTableNamingPretext[kind as keyof typeof dbTableNamingPretext]} ${filter ? `WHERE ${filter[0]} = ?` : ''}`;
+// 	const result = filter
+// 		? await env.personal_api.prepare(sqlPrompt).bind(prepareValue(filter?.[1])).all()
+// 		: await env.personal_api.prepare(sqlPrompt).all();
+// 	return (result.results[0]['COUNT(*)'] as string | number) ?? false;
+// }
 
 export async function insertIntoDb(env: Env, data: BlogFormat | SecurityFormat, kind: 'blog' | 'security'): Promise<boolean> {
 	const blogSchema: string = 'INSERT INTO Blog (Timestamp,Tags,Creator,Title,Body,Location) VALUES (?, ?, ?, ?, ?, ?)';
