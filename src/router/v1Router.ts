@@ -11,10 +11,6 @@ let additionalHeaders = {
 	'Access-Control-Allow-Methods': 'GET, POST',
 	'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
-const outdatedVersionHeaders = {
-	'X-Outdated-Version': 'true',
-	warning: 'future calls must specify version',
-};
 
 export default async function v1Router(request: Request, env: Env): Promise<Response> {
 	const { pathname } = new URL(request.url);
@@ -36,6 +32,9 @@ export default async function v1Router(request: Request, env: Env): Promise<Resp
 			section = pathSegments[0];
 			sub = pathSegments[1];
 			format = pathSegments[2];
+			additionalHeaders['X-Outdated-Version' as keyof typeof additionalHeaders] = 'true';
+			additionalHeaders['warning' as keyof typeof additionalHeaders] = 'future calls must specify version';
+			break;
 	}
 
 	if (section === 'personal' && sub === 'blog') {
