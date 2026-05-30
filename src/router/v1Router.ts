@@ -108,6 +108,7 @@ export default async function v1Router(request: Request, env: Env): Promise<Resp
 				if (!pendingData.Body) pendingData.Body = '';
 				if (!pendingData.Title) pendingData.Title = 'empty title...';
 				if (!pendingData.Tags) pendingData.Tags = '';
+				if (!pendingData.Location) pendingData.Location = 'vietnam';
 				if (!pendingData.Creator) pendingData.Creator = 'closebridge';
 				if (!pendingData.Timestamp) pendingData.Timestamp = Date.now();
 

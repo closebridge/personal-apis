@@ -16,7 +16,7 @@ export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id
 	if (id) {
 		const result = await env.personal_api
 			.prepare(
-				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${kind === 'blog' ? 'WHERE PostId = ?' : ''} ${limitAmount && !isNaN(limitAmount) ? 'LIMIT ' + limitAmount : ''}`,
+				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${kind === 'blog' ? 'WHERE PostId = ?' : ''} ${limitAmount && !isNaN(limitAmount) ? 'LIMIT ' + limitAmount : ''} ORDER BY Timestamp DESC`,
 			)
 			.bind(id ?? 1)
 			.all();
@@ -24,7 +24,7 @@ export async function getDataFromDb(env: Env, kind: 'blog' | 'totp' | 'tags', id
 	} else {
 		const result = await env.personal_api
 			.prepare(
-				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${limitAmount && !isNaN(limitAmount) ? 'LIMIT ' + limitAmount : ''}`,
+				`SELECT * FROM ${dbTableNamingPretext[kind]} ${kind == 'totp' ? 'WHERE UsedFor = "TOTP"' : ''} ${limitAmount && !isNaN(limitAmount) ? 'LIMIT ' + limitAmount : ''} ORDER BY Timestamp DESC`,
 			)
 			.all();
 		return result ?? false;
