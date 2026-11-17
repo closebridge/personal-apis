@@ -250,6 +250,15 @@ export default async function v1Router(request: Request, env: Env): Promise<Resp
 		}
 
 		if (payload.Type.toLowerCase() === 'totp') {
+			// i deaduzz forgor to actually verify
+			// lmfao
+			const [isValid] = await timeOTP('verify', env, payload.Authentication);
+			if (!isValid)
+				return new Response('generate totp required another valid totp, basically "egg or chicken first, again again", please leave.', {
+					status: 401,
+					headers: additionalHeaders,
+				});
+
 			const [isGenerated, totp] = await timeOTP('generate', env);
 			if (!isGenerated) return new Response('totp failed to generate', { status: 401, headers: additionalHeaders });
 			return new Response(`otp generated: otpauth://totp/ngsw-blog?secret=${totp}&issuer=ngsw-blog`, {
